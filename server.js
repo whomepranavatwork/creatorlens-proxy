@@ -7,8 +7,8 @@ app.use(express.json({ limit: "5mb" }));
 
 const APIFY        = "https://api.apify.com/v2";
 const ACTOR        = "apify~instagram-profile-scraper";
-const GEMINI_URL   = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
-const GEMINI_MODEL = "gemini-1.5-flash";
+const GEMINI_URL   = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+const GEMINI_MODEL = "gemini-2.0-flash";
 const PORT         = process.env.PORT || 3001;
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY || "";
@@ -105,9 +105,12 @@ app.post("/analyze", async (req, res) => {
   if (!GEMINI_KEY)
     return res.status(500).json({ error: "[analyze] GEMINI_API_KEY is not set on the server. Add it in Railway → Variables." });
   try {
-    const r = await fetch(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
+    const r = await fetch(GEMINI_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type":   "application/json",
+        "x-goog-api-key": GEMINI_KEY,
+      },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: { temperature: 0.4, maxOutputTokens: 4000 },
