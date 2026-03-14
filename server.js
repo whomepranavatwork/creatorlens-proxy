@@ -214,7 +214,7 @@ button{cursor:pointer;font-family:'Syne',system-ui,sans-serif;font-weight:800;bo
 <body>
 
 <!-- SETUP -->
-<div id="s-setup" class="screen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
+<div id="s-setup" class="screen" style="min-height:100vh;align-items:center;justify-content:center;padding:24px">
   <div style="width:100%;max-width:500px">
     <div style="margin-bottom:28px">
       <div class="flex" style="align-items:center;gap:10px;margin-bottom:16px">
@@ -245,7 +245,7 @@ button{cursor:pointer;font-family:'Syne',system-ui,sans-serif;font-weight:800;bo
 </div>
 
 <!-- LOADING -->
-<div id="s-loading" class="screen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
+<div id="s-loading" class="screen" style="min-height:100vh;align-items:center;justify-content:center;padding:24px">
   <div style="text-align:center;max-width:360px;width:100%">
     <div class="spinner"></div>
     <h2 style="font-size:20px;font-weight:800;margin-bottom:6px">Analyzing creator…</h2>
@@ -256,7 +256,7 @@ button{cursor:pointer;font-family:'Syne',system-ui,sans-serif;font-weight:800;bo
 </div>
 
 <!-- ERROR -->
-<div id="s-error" class="screen" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px">
+<div id="s-error" class="screen" style="min-height:100vh;align-items:center;justify-content:center;padding:24px">
   <div style="max-width:500px;width:100%;text-align:center">
     <div style="font-size:44px;margin-bottom:14px">⚠</div>
     <h2 style="color:var(--red);font-size:22px;font-weight:800;margin-bottom:14px">Analysis Failed</h2>
