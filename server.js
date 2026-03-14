@@ -27,7 +27,7 @@ app.use(express.json({ limit: "5mb" }));
 const APIFY        = "https://api.apify.com/v2";
 const ACTOR        = "apify~instagram-profile-scraper";
 const CLAUDE_URL   = "https://api.anthropic.com/v1/messages";
-const CLAUDE_MODEL = "claude-sonnet-4-6";   // ← updated from outdated claude-sonnet-4-20250514
+const CLAUDE_MODEL = "claude-sonnet-4-20250514"; // correct model string for Claude Sonnet 4
 const PORT         = process.env.PORT || 3001;
 
 // ── Startup validation — visible in Railway logs immediately ─────────────────
@@ -56,7 +56,7 @@ app.post("/start", async (req, res) => {
     const r = await fetch(`${APIFY}/acts/${ACTOR}/runs?token=${apifyKey}`, {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ usernames: [username], resultsLimit: 30 }),
+      body:    JSON.stringify({ usernames: [username], resultsLimit: 30, resultsType: "posts" }),
     });
     const b = await r.json().catch(() => ({}));
     if (!r.ok) {
@@ -108,7 +108,7 @@ app.get("/dataset/:datasetId", async (req, res) => {
       followersCount:  p.followersCount,
       followsCount:    p.followsCount,
       postsCount:      p.postsCount || p.mediaCount,
-      latestPosts: (p.latestPosts || p.posts || []).map(x => ({
+      latestPosts: (p.latestPosts || p.topPosts || p.posts || []).map(x => ({
         timestamp:      x.timestamp,
         likesCount:     x.likesCount,
         commentsCount:  x.commentsCount,
@@ -152,7 +152,9 @@ app.post("/analyze", async (req, res) => {
       const msg = b?.error?.message || JSON.stringify(b).slice(0, 300);
       return res.status(r.status).json({ error: `[analyze] Claude API error ${r.status}: ${msg}` });
     }
-    const text = (b.content?.[0]?.text || "{}").replace(/```json|```/g, "").trim();
+    const raw  = b.content?.[0]?.text || "{}";
+    const match = raw.match(/\{[\s\S]*\}/);
+    const text  = match ? match[0] : "{}";
     let parsed;
     try {
       parsed = JSON.parse(text);
@@ -456,7 +458,7 @@ async function startAnalysis() {
     // ── Step 2: poll ───────────────────────────────────────────────────────
     setStep(1, "Scraping Instagram…");
     let status = "RUNNING", elapsed = 0;
-    while (["RUNNING","READY","ABORTING"].includes(status)) {
+    while (["STARTING","READY","RUNNING","ABORTING"].includes(status)) {
       await sleep(5000);
       elapsed += 5;
       setStep(1, "Scraping… (" + elapsed + "s elapsed)");
@@ -623,7 +625,7 @@ function renderReport(d, ai) {
 
   // Generated hooks
   if (ai?.generatedHooks?.length) {
-    h += \`<div style="margin-bottom:28px">\${sh("10 Hook Ideas for Man Matters","#F59E0B")}<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(350px,1fr))">\`;
+    h += \`<div style="margin-bottom:28px">\${sh("10 Generated Hook Ideas","#F59E0B")}<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(350px,1fr))">\`;
     ai.generatedHooks.forEach((hk,i) => {
       const c = HOOK_COL[hk.type] || "#F59E0B";
       h += \`<div class="card" style="border-left:3px solid \${c}">
