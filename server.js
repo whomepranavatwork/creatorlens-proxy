@@ -7,21 +7,21 @@ app.use(express.json({ limit: "5mb" }));
 
 const APIFY        = "https://api.apify.com/v2";
 const ACTOR        = "apify~instagram-profile-scraper";
-const CLAUDE_URL   = "https://api.anthropic.com/v1/messages";
-const CLAUDE_MODEL = "claude-sonnet-4-20250514";
+const GEMINI_URL   = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+const GEMINI_MODEL = "gemini-1.5-flash";
 const PORT         = process.env.PORT || 3001;
 
-const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY || "";
-if (!ANTHROPIC_KEY) {
-  console.error("WARNING: ANTHROPIC_API_KEY is not set.");
+const GEMINI_KEY = process.env.GEMINI_API_KEY || "";
+if (!GEMINI_KEY) {
+  console.error("WARNING: GEMINI_API_KEY is not set.");
 } else {
-  console.log("ANTHROPIC_API_KEY is set (" + ANTHROPIC_KEY.slice(0, 12) + "...)");
+  console.log("GEMINI_API_KEY is set (" + GEMINI_KEY.slice(0, 12) + "...)");
 }
 
 // ── Routes ───────────────────────────────────────────────────────────────────
 
 app.get("/health", (_req, res) => {
-  res.json({ ok: true, anthropicKeySet: !!ANTHROPIC_KEY });
+  res.json({ ok: true, geminiKeySet: !!GEMINI_KEY });
 });
 
 app.post("/start", async (req, res) => {
@@ -102,28 +102,23 @@ app.get("/dataset/:datasetId", async (req, res) => {
 app.post("/analyze", async (req, res) => {
   const { prompt } = req.body || {};
   if (!prompt) return res.status(400).json({ error: "[analyze] prompt is required." });
-  if (!ANTHROPIC_KEY)
-    return res.status(500).json({ error: "[analyze] ANTHROPIC_API_KEY is not set on the server." });
+  if (!GEMINI_KEY)
+    return res.status(500).json({ error: "[analyze] GEMINI_API_KEY is not set on the server. Add it in Railway → Variables." });
   try {
-    const r = await fetch(CLAUDE_URL, {
+    const r = await fetch(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
       method: "POST",
-      headers: {
-        "Content-Type":      "application/json",
-        "x-api-key":         ANTHROPIC_KEY,
-        "anthropic-version": "2023-06-01",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model:      CLAUDE_MODEL,
-        max_tokens: 4000,
-        messages:   [{ role: "user", content: prompt }],
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.4, maxOutputTokens: 4000 },
       }),
     });
     const b = await r.json().catch(() => ({}));
     if (!r.ok) {
       const msg = b?.error?.message || JSON.stringify(b).slice(0, 300);
-      return res.status(r.status).json({ error: `[analyze] Claude API error ${r.status}: ${msg}` });
+      return res.status(r.status).json({ error: `[analyze] Gemini API error ${r.status}: ${msg}` });
     }
-    const raw   = b.content?.[0]?.text || "{}";
+    const raw   = b.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
     const match = raw.match(/\{[\s\S]*\}/);
     const text  = match ? match[0] : "{}";
     let parsed;
@@ -231,7 +226,7 @@ function getHTML() {
     '        &middot; <b style="color:var(--text)">[start]</b> &#8212; Apify key wrong or account is private<br>',
     '        &middot; <b style="color:var(--text)">[status]</b> &#8212; Apify run failed, check console.apify.com<br>',
     '        &middot; <b style="color:var(--text)">[dataset]</b> &#8212; No posts found or account went private<br>',
-    '        &middot; <b style="color:var(--text)">[analyze]</b> &#8212; ANTHROPIC_API_KEY missing in Railway Variables<br>',
+    '        &middot; <b style="color:var(--text)">[analyze]</b> &#8212; GEMINI_API_KEY missing in Railway Variables<br>',
     '        &middot; <b style="color:var(--text)">No label</b> &#8212; Railway server sleeping, retry in 10s',
     '      </div>',
     '    </div>',
