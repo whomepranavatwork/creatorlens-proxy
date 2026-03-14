@@ -167,15 +167,7 @@ app.post("/analyze", async (req, res) => {
   }
 });
 
-// ── UI ────────────────────────────────────────────────────────────────────────
-app.get("/", (_req, res) => {
-  res.setHeader("Content-Type", "text/html; charset=utf-8");
-  res.send(HTML);
-});
-
-app.listen(PORT, () => {
-  console.log(`CreatorLens running on port ${PORT}`);
-});
+// ── UI route and server start are placed AFTER the HTML const below ──────────
 
 // ════════════════════════════════════════════════════════════════════════════
 // HTML — full single-page app, served from /
@@ -201,7 +193,9 @@ button{cursor:pointer;font-family:'Syne',system-ui,sans-serif;font-weight:800;bo
 .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px}
 .tag{display:inline-flex;align-items:center;border-radius:5px;padding:2px 8px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-family:'Space Mono',monospace;white-space:nowrap}
 .lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;display:block;margin-bottom:7px}
-.screen{display:none}
+.screen{display:none!important}
+.screen.active{display:flex!important}
+.screen.active.block{display:block!important}
 .flex{display:flex}.wrap{flex-wrap:wrap}.g10{gap:10px}
 .grid{display:grid;gap:10px}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -314,10 +308,12 @@ const sleep    = ms => new Promise(r => setTimeout(r, ms));
 // ── Screen manager ─────────────────────────────────────────────────────────
 function show(id) {
   ["setup","loading","error","report"].forEach(s => {
-    document.getElementById("s-"+s).style.display = "none";
+    const el = document.getElementById("s-"+s);
+    el.classList.remove("active","block");
   });
   const el = document.getElementById("s-"+id);
-  el.style.display = id === "report" ? "block" : "flex";
+  el.classList.add("active");
+  if (id === "report") el.classList.add("block");
 }
 
 // ── Step indicator ─────────────────────────────────────────────────────────
@@ -366,7 +362,7 @@ function fBar(lbl,pct,col,right){ return \`<div style="margin-bottom:14px"><div 
 // ── Build metrics ──────────────────────────────────────────────────────────
 function buildMetrics(raw) {
   const p    = raw[0];
-  const rawP = (p.latestPosts||p.posts||[]).filter(x => x && x.timestamp);
+  const rawP = (p.latestPosts||p.topPosts||p.posts||[]).filter(x => x && x.timestamp);
   const F    = p.followersCount || 1;
   const N    = rawP.length || 1;
   const scored = rawP.map(x => ({
@@ -692,3 +688,13 @@ show("setup");
 </script>
 </body>
 </html>`;
+
+// ── UI route — defined after HTML const so it is not undefined ───────────────
+app.get("/", (_req, res) => {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(HTML);
+});
+
+app.listen(PORT, () => {
+  console.log(`CreatorLens running on port ${PORT}`);
+});
