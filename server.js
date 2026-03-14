@@ -7,8 +7,8 @@ app.use(express.json({ limit: "5mb" }));
 
 const APIFY        = "https://api.apify.com/v2";
 const ACTOR        = "apify~instagram-profile-scraper";
-const GEMINI_URL   = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
-const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_URL   = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-latest:generateContent";
+const GEMINI_MODEL = "gemini-2.0-flash-latest";
 const PORT         = process.env.PORT || 3001;
 
 const GEMINI_KEY = process.env.GEMINI_API_KEY || "";
